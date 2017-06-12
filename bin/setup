@@ -1,0 +1,49 @@
+#!/usr/bin/env sh
+set -e
+
+HEROKU_REGION=${HEROKU_REGION:-us}
+HEROKU_APP=$1
+MONGODB_LOG_TAIL_SIZE=${MONGODB_LOG_TAIL_SIZE:-5242880}
+
+if [ -z ${HEROKU_APP} ]; then
+  echo "Usage: [HEROKU_TEAM=yourteam] [HEROKU_REGION=eu] [MONGODB_LOG_TAIL_SIZE=bytes] bin/setup HEROKU_APP"
+fi
+
+VAULT_KEY=$(LC_CTYPE=C tr -dc 'a-zA-Z0-9-_' < /dev/urandom | head -c64)
+VAULT_IV=$(LC_CTYPE=C tr -dc 'a-zA-Z0-9-_' < /dev/urandom | head -c64)
+INITIAL_ADMIN_CODE=$(LC_CTYPE=C tr -dc 'a-zA-Z0-9-_' < /dev/urandom | head -c64)
+
+set +e
+  heroku plugins:install heroku-container-registry
+set -e
+heroku container:login
+
+if [ ${HEROKU_TEAM} ]; then
+  heroku apps:create -t $HEROKU_TEAM --region $HEROKU_REGION $HEROKU_APP
+else
+  heroku apps:create --region $HEROKU_REGION $HEROKU_APP
+fi
+
+heroku apps:info -a $HEROKU_APP
+
+heroku addons:create --as MONGODB -a $HEROKU_APP mongolab:sandbox
+
+heroku config:set -a $HEROKU_APP VAULT_KEY=$VAULT_KEY VAULT_IV=$VAULT_IV INITIAL_ADMIN_CODE=$INITIAL_ADMIN_CODE ACME_ENDPOINT=https://acme-v01.api.letsencrypt.org/ MAX_THREADS=4 WEB_CONCURRENCY=1
+
+heroku config -a $HEROKU_APP
+
+heroku config:set -a $HEROKU_APP ACME_ENDPOINT=https://acme-v01.api.letsencrypt.org/
+
+# https://github.com/kontena/kontena/pull/2455
+docker pull mattipaksula/kontena-server
+docker tag mattipaksula/kontena-server registry.heroku.com/$HEROKU_APP/web
+docker push registry.heroku.com/$HEROKU_APP/web
+
+heroku ps -a $HEROKU_APP
+
+MONGODB_URI=$(heroku config:get MONGODB_URI -a $HEROKU_APP)
+echo "Connecting to $MONGODB_URI"
+
+docker run -it --rm --entrypoint /usr/bin/mongo mongo:3.2.13 --eval "db.createCollection('container_logs_tail', {capped: true, size: $MONGODB_LOG_TAIL_SIZE})" $MONGODB_URI
+
+heroku logs -t -a $HEROKU_APP
