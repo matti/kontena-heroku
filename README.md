@@ -4,6 +4,10 @@ Run a Kontena master in Heroku.
 
 ```
 bin/setup APP IMAGE
+
+kontena master login --name yourmaster --code INITIAL_ADMIN_CODE https://HEROKU_APP.herokuapp.com/
+kontena master init-cloud
+
 ```
 
 ## Building your own
