@@ -2,26 +2,21 @@
 set -e
 
 HEROKU_APP=$1
-KONTENA_SERVER_IMAGE=$2
-
 HEROKU_REGION=${HEROKU_REGION:-us}
 CONTAINER_LOGS_CAPPED_SIZE=${CONTAINER_LOGS_CAPPED_SIZE:-10}
 CONTAINER_STATS_CAPPED_SIZE=${CONTAINER_STATS_CAPPED_SIZE:-10}
 EVENT_LOGS_CAPPED_SIZE=${EVENT_LOGS_CAPPED_SIZE:-1}
 
-if [ -z ${HEROKU_APP} ] || [ -z ${KONTENA_SERVER_IMAGE} ]; then
-  echo "Usage: [HEROKU_TEAM=yourteam] [HEROKU_REGION=eu] [CONTAINER_LOGS_CAPPED_SIZE=megabytes] [CONTAINER_STATS_CAPPED_SIZE=megabytes] [EVENT_LOGS_CAPPED_SIZE=megabytes] bin/setup HEROKU_APP KONTENA_SERVER_IMAGE"
+if [ -z ${HEROKU_APP} ]; then
+  echo "Usage: [HEROKU_TEAM=] [HEROKU_REGION=us] [CONTAINER_LOGS_CAPPED_SIZE=10] [CONTAINER_STATS_CAPPED_SIZE=10] [EVENT_LOGS_CAPPED_SIZE=1] bin/setup HEROKU_APP"
+  echo
+  echo "Note: Capped collection sizes are in megabytes"
   exit 1
 fi
 
 VAULT_KEY=$(LC_CTYPE=C tr -dc 'a-zA-Z0-9-_' < /dev/urandom | head -c64)
 VAULT_IV=$(LC_CTYPE=C tr -dc 'a-zA-Z0-9-_' < /dev/urandom | head -c64)
 INITIAL_ADMIN_CODE=$(LC_CTYPE=C tr -dc 'a-zA-Z0-9-_' < /dev/urandom | head -c64)
-
-set +e
-  heroku plugins:install heroku-container-registry
-set -e
-heroku container:login
 
 if [ ${HEROKU_TEAM} ]; then
   heroku apps:create -t $HEROKU_TEAM --region $HEROKU_REGION $HEROKU_APP
@@ -48,10 +43,5 @@ heroku config -a $HEROKU_APP
 
 heroku config:set -a $HEROKU_APP ACME_ENDPOINT=https://acme-v01.api.letsencrypt.org/
 
-# https://github.com/kontena/kontena/pull/2455
-docker pull $KONTENA_SERVER_IMAGE
-docker tag $KONTENA_SERVER_IMAGE registry.heroku.com/$HEROKU_APP/web
-docker push registry.heroku.com/$HEROKU_APP/web
-
-heroku ps -a $HEROKU_APP
-heroku logs -t -a $HEROKU_APP
+echo
+echo "Setup done, now deploy with: $ bin/deploy $HEROKU_APP [KONTENA_SERVER_IMAGE=kontena/server]"

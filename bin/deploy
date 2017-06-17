@@ -1,0 +1,22 @@
+#!/usr/bin/env sh
+set -e
+
+HEROKU_APP=${1}
+KONTENA_SERVER_IMAGE=${2:-kontena/server}
+
+if [ -z ${HEROKU_APP} ]; then
+  echo "Usage: bin/deploy HEROKU_APP [KONTENA_SERVER_IMAGE=kontena/server]"
+  exit 1
+fi
+
+set +e
+  heroku plugins:install heroku-container-registry
+set -e
+heroku container:login
+
+docker pull $KONTENA_SERVER_IMAGE
+docker tag $KONTENA_SERVER_IMAGE registry.heroku.com/$HEROKU_APP/web
+docker push registry.heroku.com/$HEROKU_APP/web
+
+heroku ps -a $HEROKU_APP
+heroku logs -t -a $HEROKU_APP
