@@ -17,7 +17,6 @@ kontena master init-cloud
 Keeping mongodb under mlab limits requires additional collection capping / adjusting:
 
 https://github.com/kontena/kontena/issues/2663
-https://github.com/kontena/kontena/issues/2563
 
 Start `heroku run bin/kontena-console -a APP`
 
@@ -29,12 +28,17 @@ HostNodeStat.collection.client.command(
 )
 ```
 
+Additionally you need to `repairDatabase` to compact the size every now and then:
+
 ```
-GridServiceDeploy.collection.client.command(
-  convertToCapped: GridServiceDeploy.collection.name,
-  capped: true,
-  size: 10.megabytes
-)
+heroku addons:create scheduler:standard --wait -a APP
+heroku addons:open scheduler -a APP
+```
+
+And create a task with:
+
+```
+ruby -r ./app/boot.rb -e "puts Mongoid.default_client.command(repairDatabase: 1).documents.inspect"
 ```
 
 ## Advanced options
