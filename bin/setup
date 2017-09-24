@@ -14,9 +14,9 @@ if [ -z ${HEROKU_APP} ]; then
   exit 1
 fi
 
-VAULT_KEY=$(LC_CTYPE=C tr -dc 'a-zA-Z0-9-_' < /dev/urandom | head -c64)
-VAULT_IV=$(LC_CTYPE=C tr -dc 'a-zA-Z0-9-_' < /dev/urandom | head -c64)
-INITIAL_ADMIN_CODE=$(LC_CTYPE=C tr -dc 'a-zA-Z0-9-_' < /dev/urandom | head -c64)
+VAULT_KEY=$(LC_ALL=C tr -dc 'a-zA-Z0-9-_' < /dev/urandom | head -c64)
+VAULT_IV=$(LC_ALL=C tr -dc 'a-zA-Z0-9-_' < /dev/urandom | head -c64)
+INITIAL_ADMIN_CODE=$(LC_ALL=C tr -dc 'a-zA-Z0-9-_' < /dev/urandom | head -c64)
 
 if [ ${HEROKU_TEAM} ]; then
   heroku apps:create -t $HEROKU_TEAM --region $HEROKU_REGION $HEROKU_APP
