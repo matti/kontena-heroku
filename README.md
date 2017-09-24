@@ -6,9 +6,11 @@ Run a Kontena master in Heroku.
 
 ```
 bin/setup APP
-bin/deploy APP [IMAGE=kontena/server]
+bin/deploy APP
 
 kontena master login --name yourmaster --code INITIAL_ADMIN_CODE https://HEROKU_APP.herokuapp.com/
+
+#maybe:
 kontena master init-cloud
 ```
 

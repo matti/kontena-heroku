@@ -2,10 +2,10 @@
 set -e
 
 HEROKU_APP=${1}
-KONTENA_SERVER_IMAGE=${2:-kontena/server}
+KONTENA_SERVER_IMAGE=${KONTENA_SERVER_IMAGE:-kontena/server:latest}
 
 if [ -z ${HEROKU_APP} ]; then
-  echo "Usage: bin/deploy HEROKU_APP [KONTENA_SERVER_IMAGE=kontena/server]"
+  echo "Usage: [KONTENA_SERVER_IMAGE=kontena/server:latest] bin/deploy HEROKU_APP"
   exit 1
 fi
 
