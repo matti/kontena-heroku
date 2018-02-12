@@ -1,5 +1,7 @@
 # kontena-heroku
 
+**DEPRECATED favor of: https://github.com/matti/terraform-kontena-heroku**
+
 Run a Kontena master in Heroku.
 
 ## Quickstart
